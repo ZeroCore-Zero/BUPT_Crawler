@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>审计界面</title>
+        <meta charset="utf-8">
+        <style>
+            html {
+                height: 100%;
+            }
+            body {
+                display:flex;
+                flex-direction: column;
+                align-items: center;
+                height: 100%;
+            }
+            .control {
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                flex:0;
+                margin-bottom:1rem;
+            }
+            .buttons {
+                display: flex;
+                flex-direction: column;
+                width: 50%;
+            }
+            .buttons div {
+                display: flex;
+                justify-content: space-between;
+                margin-bottom: 0.5rem;
+            }
+            button {
+                width: 40%;
+            }
+            iframe {
+                flex:2;
+                border: 0.5rem solid red;
+                padding: 1rem;
+                width: 90%;
+            }
+        </style>
+    </head>
+    <body>
+        <div class="control">
+            <h1></h1>
+            <div class="buttons">
+                <div>
+                    <button id="last">Last</button>
+                    <button id="next">Next</button>
+                </div>
+                <div>
+                    <button id="remain">Remain</button>
+                    <button id="delete">Delete</button>
+                </div>
+            </div>
+        </div>
+        <iframe src=""></iframe>
+        <script>
+            var list;
+            var current=0;
+
+            //获取文件列表
+            var httpRequest = new XMLHttpRequest();
+            httpRequest.open('POST', 'http://localhost:8000');
+            httpRequest.setRequestHeader("Content-type","text/plain");
+            httpRequest.send("get=resource");
+            
+            httpRequest.onreadystatechange=()=>{
+                //储存文件列表
+                if(httpRequest.readyState==4&&httpRequest.status==200){
+                    var json = httpRequest.responseText;
+                    json=JSON.parse(json);
+                    list=Object.values(json);
+                }
+                //初始化第一次审计
+                fram.setAttribute("src",`./resource/${list[current]}`);
+                hed.innerHTML=`当前界面[${current+1}/${list.length+1}]:${list[current]}`;
+            };
+
+            //按钮功能
+            var lstbtn=document.getElementById("last");
+            var nxtbtn=document.getElementById("next");
+            var delbtn=document.getElementById("delete");
+            var rmnbtn=document.getElementById("remain");
+
+            var fram=document.querySelector("iframe");
+            var hed=document.querySelector("h1");
+
+            lstbtn.addEventListener("click",()=>{
+                if(current<=0) {
+                    alert("You can't get last one anymore!!!");
+                    return;
+                }
+                fram.setAttribute("src",`./resource/${list[--current]}`);
+                hed.innerHTML=`当前界面[${current+1}/${list.length+1}]:${list[current]}`;
+            });
+
+            nxtbtn.addEventListener("click",()=>{
+                if(current>=list.length) {
+                    alert("You can't get next one anymore!!!");
+                    return;
+                }
+                fram.setAttribute("src",`./resource/${list[++current]}`);
+                hed.innerHTML=`当前界面[${current+1}/${list.length+1}]:${list[current]}`;
+            });
+
+            delbtn.addEventListener("click",()=>{
+                httpRequest.open('POST', 'http://localhost:8000');
+                httpRequest.setRequestHeader("Content-type","text/plain");
+                httpRequest.send(`delete=${list[current]}`);
+                httpRequest.onreadystatechange=()=>{
+                    if(httpRequest.readyState==4&&httpRequest.status==200){
+                        if(httpRequest.responseText=="perfect") {
+                            fram.setAttribute("src","");
+                            list.splice(current,1);
+                            hed.innerHTML=`${list[current]}删除成功！`;
+                            fram.setAttribute("src",`./resource/${list[current]}`);
+                            hed.innerHTML=`当前界面[${current+1}/${list.length+1}]:${list[current]}`;
+                        }
+                        else {
+                            hed.innerHTML=`${list[current]}删除失败！`;
+                        }
+                    }
+                };
+            });
+
+            rmnbtn.addEventListener("click",()=>{
+                httpRequest.open('POST', 'http://localhost:8000');
+                httpRequest.setRequestHeader("Content-type","text/plain");
+                httpRequest.send(`remain=${list[current]}`);
+                httpRequest.onreadystatechange=()=>{
+                    if(httpRequest.readyState==4&&httpRequest.status==200){
+                        if(httpRequest.responseText=="perfect") {
+                            hed.innerHTML=`${list[current]}保存成功！`;
+                        }
+                        else {
+                            hed.innerHTML=`${list[current]}保存失败！`;
+                        }
+                    }
+                };
+            });
+        </script>
+    </body>
+</html>
