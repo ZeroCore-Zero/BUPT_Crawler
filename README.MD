@@ -10,3 +10,15 @@ BUPT Crawer 是一个为方便北邮学生获取数据而编写的爬虫程序
 |  getInfo.py  |  爬取信息门户通知  |  未完成，正在编写  |
 |  config.json  |  个人信息  |
 |  urls.json  |  北邮网址目录  |
+
+## 使用指南
+
+0.在`config.json.example`中填入学号与密码，并重命名为`config.json`。
+
+### 爬取通知
+
+1.运行`getInfo.py`。
+
+### 辅助抢课
+
+1.运行`xuanke.py`。
