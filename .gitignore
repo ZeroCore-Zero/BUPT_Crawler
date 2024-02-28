@@ -2,6 +2,7 @@
 __pycache__
 .vscode
 frp_0.54.0_linux_amd64
+test
 
 # personal files
 config.json

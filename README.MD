@@ -2,7 +2,7 @@
 
 BUPT Crawer 是一个为方便北邮学生获取数据而编写的爬虫程序
 
-**请在遵循[《北京邮电大学校园网电子资源使用及管理办法（暂行）》](https://lib.bupt.edu.cn/a/ziyuan/dianziziyuan/guanlibanfa/)，[电子资源使用说明](https://lib.bupt.edu.cn/a/ziyuan/dianziziyuan/banquanshuoming/)等的前提下使用**
+**请在遵循[《北京邮电大学校园网电子资源使用及管理办法（暂行）》](https://lib.bupt.edu.cn/a/ziyuan/dianziziyuan/guanlibanfa/)，[《电子资源使用说明》](https://lib.bupt.edu.cn/a/ziyuan/dianziziyuan/banquanshuoming/)等的前提下使用**
 
 ## 文件目录
 |    文件    |    描述    |    状态    |
