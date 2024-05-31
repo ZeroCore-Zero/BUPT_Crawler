@@ -1,0 +1,77 @@
+# 信息门户爬虫专用函数
+from common import getCallerFile
+from bs4 import BeautifulSoup
+import json
+import os
+
+
+def delUnusableHTML(dirpath: str):
+    """
+        删除按照序列号爬取的信息门户html文件中的无效页面
+
+        参数：
+        dirpath:    html文件所在目录
+    """
+    fileNumber = len(os.listdir(dirpath))
+    for filename in fileNumber:
+        filepath = "{}/{}".format(dirpath, filename)
+        isUsable = True
+        try:
+            with open(filepath, "r") as file:
+                soup = BeautifulSoup(file, "html.parser")
+                if (soup.span.string == "栏目不存在!"):
+                    print("file {} is unusable!".format(filename))
+                    isUsable = False
+        except FileNotFoundError:
+            print("file {} can't be found!".format(filename))
+            continue
+        if not isUsable:
+            os.remove(filepath)
+
+
+def getPages(dirpath) -> str:
+    """
+        获取审计页面列表
+
+        参数：
+        dirpath：   页面列表所在目录
+        返回值：
+        rpdata：    页面列表路径集合
+    """
+    filelist = os.listdir(os.path.dirname(getCallerFile())+"/"+dirpath)
+    rpdata = {}
+    i = 0
+    for file in filelist:
+        rpdata[i] = file
+        # print(i,"\t:",file)
+        i += 1
+    rpdata = json.dumps(rpdata)
+    return rpdata
+
+
+def delPages(filepath) -> str:
+    """
+        审计页面时假删除
+
+        参数：
+        filepath：  文件路径
+
+        返回值：
+        rpdata：    操作状态（目前没啥用）
+    """
+
+    os.rename("")
+    rpdata = "perfect"
+    return rpdata
+
+
+def rmnPages(filepath) -> str:
+    """
+        审计页面时保留
+
+        参数：
+        filepath：  文件路径
+
+        返回值：
+        rpdata：    操作状态（目前没啥用）
+    """

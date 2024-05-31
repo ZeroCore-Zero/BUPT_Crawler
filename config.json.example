@@ -1,5 +1,15 @@
 {
-    "username":"",//填入学号
-    "password":"",//填入密码
-    "ua":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+    "username":"",  //填入学号
+    "password":"",  //填入密码
+    "ua":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+    "webhook": [
+        {
+            "url": "https://open.feishu.cn/open-apis/bot/v2/hook/xxxxxxxxxxxxxxxxxxxxxxxxx",    //填入机器人的webhook
+            "statues": "test"   //test为测试，release为正式
+        }
+    ],
+    "feishu": {     //自己获取
+        "appID": "xxxxxxxxx",
+        "appSecret": "xxxxxxxxxxxxxxxxxx"
+    }
 }

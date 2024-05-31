@@ -7,3 +7,4 @@ test
 # personal files
 config.json
 audit/resource/*
+*.pickle

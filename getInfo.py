@@ -1,43 +1,49 @@
+from function import common, xxmh  # 函数库
 from bs4 import BeautifulSoup
 from time import sleep
-# import logging
-# import requests
-# import json
-# import re
+import pickle
+import os
 
-import bupt_funcs   #函数库
+_ARCHIVED_NOTICES = True
+_PUBLISHED = True
 
-# 读取数据
-config,urls=bupt_funcs.loadData()
-# 构造Session
-session=bupt_funcs.sessionInit()
+if __name__ == "__main__":
+    # 准备工作
+    os.chdir(os.path.dirname(__file__))
+    config, urls = common.loadData()        # 读取数据
+    session = common.sessionInit()          # 构造Session
+    xxmh.login_CAS(session, urls["cas"], config["username"], config["password"])
+    session.get(urls["xxmh"]["tongzhi"])    # 信息门户单独认证
+    notice_storages = []
+    if _ARCHIVED_NOTICES:
+        with open("notice.pickle", "rb") as archive_file:
+            notice_storages = pickle.load(archive_file)
 
-# 登录CAS
-resp=session.get(url=urls["cas"])
-soup=BeautifulSoup(resp.text,"html.parser")
-varid=soup.find(attrs={"name":"execution"})["value"]
-post_data={
-    "username":config["username"],
-    "password":config["password"],
-    "type":"username_password",
-    "submit":"LOGIN",
-    "_eventId":"submit",
-    "execution":varid
-}
-session.post(url=urls["cas"],data=post_data)
+    # 爬取信息
+    while True:
+        notices = xxmh.format_Notices(
+            BeautifulSoup(session.get(urls["xxmh"]["tongzhi"]).text, "html.parser")
+            .find(attrs={"class": "newslist list-unstyled"})
+        )
 
-# 爬取信息门户
-session.get(urls["xxmh"]["login"])  # 信息门户有单独认证，需要单独发一个get拿到认证
-for i in range(2181,10000):
-    filename="xxmh_{}.htm".format(i)
-    print("Getting site {} ...".format(filename))
-    bupt_funcs.write_to_file("./xxmh/{}".format(filename),
-                             session.get("http://my.bupt.edu.cn/list.jsp?urltype=tree.TreeTempUrl&wbtreeid={}".format(i)).text)
-    print("Site {} is writen,please wait...".format(filename))
-    sleep(0.1)
+        for item in notices:
+            if any(item["title"] == archive["title"] for archive in notice_storages):
+                continue
+            # 如果是新消息就存档并发送
+            notice_storages.append(item)
+            if len(notice_storages) > 100:
+                notice_storages.pop(0)
+            with open("notice.pickle", "wb") as archive_file:
+                pickle.dump(notice_storages, archive_file)
 
-
-
-
-# resp=session.get(urls["xxmh"]["tongzhi"])
-# bupt_funcs.write_to_file("temp.htm",resp.text)
+            print(item["title"])
+            for webhook in config["webhook"]:
+                if webhook["statues"] == "release" and not _PUBLISHED:
+                    print(f'webhook {config["webhook"].index(webhook)}, not publish')
+                    continue
+                notice_msg = xxmh.send_notice(item, webhook["url"])
+                content_msg = xxmh.send_content(
+                    session.get(item["url"]).text,
+                    webhook["url"], urls["feishu"], config["feishu"])
+                print(f'webhook {config["webhook"].index(webhook)}, {notice_msg=}, {content_msg=}')
+        sleep(60)
