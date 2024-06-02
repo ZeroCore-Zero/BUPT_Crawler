@@ -1,0 +1,8 @@
+__pycache__
+.vscode
+.git
+.gitignore
+LICENSE
+README.MD
+test
+config/*.example

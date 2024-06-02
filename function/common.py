@@ -2,6 +2,7 @@
 import requests
 import inspect
 import json
+import os
 
 
 def write_to_file(filename: str, text: str):
@@ -14,10 +15,6 @@ def write_to_file(filename: str, text: str):
     """
     with open(filename, 'w') as file:
         file.write(text)
-
-
-def writeSequential(dirname, fileprefx, filesuffix, counter, text):
-    dirname
 
 
 def sessionInit() -> requests.Session:
@@ -42,19 +39,34 @@ def loadData() -> tuple[dict, dict]:
         urls:       北邮网址
 
     """
-    with open("config.json", "r") as config, open("urls.json", "r") as urls:
-        return json.load(config), json.load(urls)
+    config_folder = os.path.join(
+        os.path.dirname(__file__),
+        "..",
+        "config"
+    )
+    config_files = [
+        os.path.join(config_folder, file)
+        for file in os.listdir(config_folder)
+    ]
+    url_folder = os.path.join(
+        os.path.dirname(__file__),
+        "..",
+        "url"
+    )
+    url_files = [
+        os.path.join(url_folder, file)
+        for file in os.listdir(url_folder)
 
-
-def getCurrentFile() -> str:
-    """
-        返回当前文件的文件地址
-
-        返回值：
-        current_file：文件地址
-    """
-    current_file = inspect.getframeinfo(inspect.currentframe().f_back).filename
-    return current_file
+    ]
+    config = {}
+    url = {}
+    for config_file in config_files:
+        with open(config_file, "r") as file:
+            config |= json.load(file)
+    for url_file in url_files:
+        with open(url_file, "r") as file:
+            url |= json.load(file)
+    return config, url
 
 
 def getCallerFile() -> str:
