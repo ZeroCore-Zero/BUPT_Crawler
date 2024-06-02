@@ -26,8 +26,8 @@ BUPT Crawer 是一个为方便北邮学生获取数据而编写的爬虫程序
       ```
    - 使用docker运行
       ```shell
-      docker build -t BUPT_Crawler .
-      docker run -td BUPT_Crawler
+      docker build -t bupt_crawler .
+      docker run -td bupt_crawler
       ```
 
 
