@@ -1,5 +1,5 @@
 from requests_toolbelt import MultipartEncoder
-from bs4 import BeautifulSoup
+import time
 import requests
 import json
 import io
@@ -72,18 +72,18 @@ def generate_notice_content(item):
     content = {
         "title": item["title"],
         "content": [
-            [
-                {
-                    "tag": "text",
-                    "text": f"发布部门：{item['author']}"
-                }
-            ],
-            [
-                {
-                    "tag": "text",
-                    "text": f"发布时间：{item['time']}"
-                }
-            ],
+            [{
+                "tag": "text",
+                "text": f"信息门户：{time.strftime('%Y-%m-%d %H:%M')}"
+            }],
+            [{
+                "tag": "text",
+                "text": f"发布部门：{item['author']}"
+            }],
+            [{
+                "tag": "text",
+                "text": f"发布时间：{item['time']}"
+            }],
             [
                 {
                     "tag": "a",
@@ -103,25 +103,8 @@ def generate_notice_content(item):
 
 # 生成内容json结构
 def generate_page_content(page):
-    page = BeautifulSoup(page, "html.parser")
-    title = page.h1.text
-    content = [item for item in [
-        para.text.strip()
-        if para.span is not None
-        else "http://my.bupt.edu.cn/" + para.img["src"]
-        if para.img is not None
-        else None
-        for para in page.find(attrs={"class": "v_news_content"}).find_all("p")
-    ] if item not in [None, ""]]
-    attachment = [
-        {
-            "file": batch.a.text,
-            "link": "http://my.bupt.edu.cn/" + batch.a["href"]
-        } for batch in page.find(attrs={"class": "battch"}).ul.find_all("li")
-    ] if page.find(attrs={"class": "battch"}).ul is not None else []
-
     main = {
-        "title": title,
+        "title": page["title"],
         "content":
             [
                 [{
@@ -131,11 +114,11 @@ def generate_page_content(page):
                 else [{
                     "tag": "img",
                     "image_key": getImageKey(text)
-                }] for text in content
+                }] for text in page["content"]
             ]
     }
 
-    if attachment:
+    if page["attachment"]:
         main["content"] += [[{
             "tag": "hr"
         }]] + [[{
@@ -147,7 +130,7 @@ def generate_page_content(page):
                 "tag": "a",
                 "text": batch["file"],
                 "href": batch["link"]
-            }] for batch in attachment
+            }] for batch in page["attachment"]
         ]
 
     return main
