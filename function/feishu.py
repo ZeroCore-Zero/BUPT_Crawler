@@ -1,14 +1,19 @@
 from requests_toolbelt import MultipartEncoder
-import time
 import requests
 import json
 import io
 import os
 
+_DEBUG = True
 with open(os.path.join(os.path.dirname(__file__), "../config/feishu.json")) as file:
     config = json.load(file)
 with open(os.path.join(os.path.dirname(__file__), "../url/feishu.json")) as file:
     url = json.load(file)
+if _DEBUG:
+    config = {
+        "appID": "cli_a6eae3ee74bb900c",
+        "appSecret": "1r76MftBn6jQaW83QLYGlWJgRC8B55Pw"
+    }
 
 
 # 获取tenant_access_token
@@ -49,9 +54,8 @@ def getGroupsID():
 
 
 # 获取飞书图片标识
-def getImageKey(imgurl):
+def getImageKey(img):
     global url, config
-    img = requests.get(imgurl).content
     data = MultipartEncoder({
         "image_type": "message",
         "image": (io.BytesIO(img))
@@ -67,77 +71,36 @@ def getImageKey(imgurl):
     return rp.json()["data"]["image_key"]
 
 
-# 生成通知json结构
-def generate_notice_content(item):
-    content = {
-        "title": item["title"],
-        "content": [
-            [{
-                "tag": "text",
-                "text": f"信息门户：{time.strftime('%Y-%m-%d %H:%M')}"
-            }],
-            [{
-                "tag": "text",
-                "text": f"发布部门：{item['author']}"
-            }],
-            [{
-                "tag": "text",
-                "text": f"发布时间：{item['time']}"
-            }],
-            [
-                {
-                    "tag": "a",
-                    "text": "原文地址",
-                    "href": item["url"]
-                },
-                {
-                    "tag": "at",
-                    "user_id": "all",
-                    "user_name": "所有人"
-                }
-            ]
-        ]
+# 获取飞书文件标识
+def getFileKey(file):
+    pass
+
+
+# 处理图片和文件的接口
+def load_item(item):
+    if item["tag"] == "img":
+        item["image_key"] = getImageKey(item["img"])
+        del item["img"]
+    if item["tag"] == "file":
+        item["file_key"] = getFileKey(item["file"])
+        del item["file"]
+    return item
+
+
+# 处理传入的json为标准的飞书消息api格式
+def handle_content(content):
+    payload = {
+        "title": content["title"],
+        "content": [[
+            load_item(item)
+            for item in para
+        ] for para in content["content"]]
     }
-    return content
-
-
-# 生成内容json结构
-def generate_page_content(page):
-    main = {
-        "title": page["title"],
-        "content":
-            [
-                [{
-                    "tag": "text",
-                    "text": text
-                }] if "http://my.bupt.edu.cn/" not in text
-                else [{
-                    "tag": "img",
-                    "image_key": getImageKey(text)
-                }] for text in page["content"]
-            ]
-    }
-
-    if page["attachment"]:
-        main["content"] += [[{
-            "tag": "hr"
-        }]] + [[{
-            "tag": "text",
-            "text": "附件如下：",
-            "style": ["bold"]
-        }]] + [
-            [{
-                "tag": "a",
-                "text": batch["file"],
-                "href": batch["link"]
-            }] for batch in page["attachment"]
-        ]
-
-    return main
+    return payload
 
 
 # 发送飞书消息-自建应用-通知
-def send_to_group(item, page):
+def send_to_group(item, content):
     global url
     header = {
         "Authorization": "Bearer " + get_tenant_access_token(),
@@ -154,7 +117,7 @@ def send_to_group(item, page):
                 "receive_id": group["chat_id"],
                 "msg_type": "post",
                 "content": json.dumps({
-                    "zh_cn": generate_notice_content(item)
+                    "zh_cn": handle_content(item)
                 })
             }
         )
@@ -166,7 +129,7 @@ def send_to_group(item, page):
                 "receive_id": group["chat_id"],
                 "msg_type": "post",
                 "content": json.dumps({
-                    "zh_cn": generate_page_content(page)
+                    "zh_cn": handle_content(content)
                 })
             }
         )
