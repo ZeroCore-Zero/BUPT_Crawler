@@ -5,7 +5,7 @@ import json
 import io
 import os
 
-_DEBUG = True
+_DEBUG = False
 log = logger.getLogger(__name__)
 with open(os.path.join(os.path.dirname(__file__), "../config/feishu.json")) as file:
     config = json.load(file)
