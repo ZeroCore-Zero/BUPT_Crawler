@@ -2,6 +2,7 @@ from bs4 import BeautifulSoup
 import requests
 from PIL import Image
 from . import logger
+import subprocess
 import time
 import json
 import sys
@@ -13,6 +14,29 @@ with open(os.path.join(os.path.dirname(__file__), "../config/bupt.json"), "r") a
     config = json.load(file)
 with open(os.path.join(os.path.dirname(__file__), "../url/bupt.json"), "r") as file:
     url = json.load(file)
+
+
+def exitProc():
+    try:
+        out = subprocess.run(["cat", "/var/log/syslog"], stdout=subprocess.PIPE).stdout.decode()
+    except FileNotFoundError as e:
+        log.error(e)
+        log.error("找不到文件/var/log/syslog")
+    else:
+        with open(os.path.join(os.path.dirname(__file__), "../log/system.log"), "w") as file:
+            file.write(out)
+        log.info("系统日志/var/log/syslog已保存到文件")
+
+    try:
+        out = subprocess.run("logread", stdout=subprocess.PIPE).stdout.decode()
+    except FileNotFoundError as e:
+        log.error(e)
+        log.error("找不到命令logread")
+    else:
+        with open(os.path.join(os.path.dirname(__file__), "../log/system.log"), "w") as file:
+            file.write(out)
+        log.info("系统日志logread已保存到文件")
+    sys.exit()
 
 
 def autoRetryRequest(msg, mlog, max_retry=5):
@@ -43,7 +67,7 @@ def autoRetryRequest(msg, mlog, max_retry=5):
                     time.sleep(3)
                 else:
                     mlog.critical(msg["fail"])
-                    sys.exit()
+                    exitProc()
         return resp
     return wrapper
 

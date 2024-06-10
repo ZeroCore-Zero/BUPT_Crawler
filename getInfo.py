@@ -1,4 +1,4 @@
-from function import feishu, xxmh, win, logger  # 函数库
+from function import feishu, xxmh, win, logger, bupt  # 函数库
 import time
 import os
 
@@ -59,4 +59,9 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    try:
+        main()
+    except SystemExit as e:
+        print(e)
+        log.critical("程序由于异常退出")
+        bupt.exitProc()

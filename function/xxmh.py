@@ -24,7 +24,7 @@ def login():
     session = bupt.sessionInit(CAS=True)
     if not session:
         log.critical("获取Session失败")
-        sys.exit()
+        bupt.exitProc()
     log.debug(f"登录到{name}")
     is_success = False
     for i in range(_MAX_RETRY + 1):
@@ -48,7 +48,7 @@ def login():
                 time.sleep(3)
             else:
                 log.critical("达到最大重试次数，登录失败")
-                sys.exit()
+                bupt.exitProc()
 
 
 login()

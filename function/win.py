@@ -25,7 +25,7 @@ def login():
     session = bupt.sessionInit()
     if not session:
         log.critical("获取Session失败")
-        sys.exit()
+        bupt.exitProc()
     # # 似乎不需要登录也能获取通知列表
     # log.debug(f"登录到{name}")
     # is_success = False
@@ -53,7 +53,7 @@ def login():
     #             time.sleep(3)
     #         else:
     #             log.critical("达到最大重试次数，登录失败")
-    #             sys.exit()
+    #             bupt.exitProc()
 
 
 login()
