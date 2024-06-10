@@ -1,28 +1,75 @@
 from bs4 import BeautifulSoup
-from . import bupt
+from . import bupt, logger
 from urllib.parse import urljoin
+# import requests
+import sys
 import json
 import time
 import os
 
+# _MAX_RETRY = 5
 name = "大学生创新创业训练计划平台"
 baseURL = "http://win.bupt.edu.cn/"
-session = bupt.sessionInit()
+log = logger.getLogger(__name__)
+session = None
 with open(os.path.join(os.path.dirname(__file__), "../config/bupt.json"), "r") as file:
     config = json.load(file)["win"]
 with open(os.path.join(os.path.dirname(__file__), "../url/bupt.json"), "r") as file:
     url = json.load(file)["win"]
-# 似乎不需要登录也能获取通知列表
-# session.post(url=url["login"], data={
-#     "user": config["username"],
-#     "pass": config["password"]
-# })
+
+
+# 登录函数
+def login():
+    global session, config, url, log
+    log.debug("获取Session")
+    session = bupt.sessionInit()
+    if not session:
+        log.critical("获取Session失败")
+        sys.exit()
+    # # 似乎不需要登录也能获取通知列表
+    # log.debug(f"登录到{name}")
+    # is_success = False
+    # for i in range(_MAX_RETRY + 1):
+    #     try:
+    #         resp = session.post(url=url["login"], data={
+    #             "user": config["username"],
+    #             "pass": config["password"]
+    #         })
+    #         resp.raise_for_status()
+    #     except requests.exceptions.ConnectionError as e:
+    #         log.error(e)
+    #         log.error(f"网络连接错误，第{i}次")
+    #     except requests.exceptions.HTTPError as e:
+    #         log.error(e)
+    #         log.error(f"HTTP错误，第{i}次")
+    #     else:
+    #         log.debug("登录成功")
+    #         is_success = True
+    #     finally:
+    #         if is_success:
+    #             return
+    #         if i < _MAX_RETRY:
+    #             log.error(f"等待重试第{i + 1}次")
+    #             time.sleep(3)
+    #         else:
+    #             log.critical("达到最大重试次数，登录失败")
+    #             sys.exit()
+
+
+login()
 
 
 def get_notice_list():
-    global session, url
+    global session, url, log
+    msg = {
+        "start": "获取通知列表",
+        "success": "获取成功",
+        "fail": "达到最大重试次数，获取失败"
+    }
+    resp = bupt.autoRetryRequest(msg, log)(session.get, url["notice"])
+    log.debug("解析查询结果")
     noticesHTML = BeautifulSoup(
-        session.get(url["notice"]).text, "html.parser"
+        resp.text, "html.parser"
     ).find(attrs={"class": "winlist"})
     noticeList = [
         {
@@ -77,13 +124,20 @@ def handle_node(para):
 def get_content(url):
     global session
     page = {}
+    msg = {
+        "start": "获取内容详情",
+        "success": "获取成功",
+        "fail": "达到最大重试次数，获取失败"
+    }
+    resp = bupt.autoRetryRequest(msg, log)(session.get, url)
+    log.debug("解析查询结果")
     contentHTML = BeautifulSoup(
-        session.get(url).text, "lxml"
+        resp.text, "lxml"
     )
     page["title"] = contentHTML.h2.text
     page["content"] = []
     page["attachment"] = []
-
+    # 大创网站的页面html结构十分费解，所以下面的解析结构也十分费解（咱要文明~）
     for para in contentHTML.find(attrs={"class": "entry-content notopmargin"}).children:
         if isinstance(para, str):
             continue
@@ -118,7 +172,9 @@ def get_content(url):
 
 
 def send_feishu(item):
-    global session
+    global session, log
+    log.debug(f"准备发往飞书的json结构，通知标题：{item['title']}，在{name}")
+    log.debug("生成通知结构")
     notice = {
         "title": item["title"],
         "content": [
@@ -144,12 +200,15 @@ def send_feishu(item):
             ]
         ]
     }
+    log.debug("获取详情页面结构")
     page = get_content(item["url"])
+    log.debug("生成内容结构")
     content = {
         "title": page["title"],
         "content": page["content"]
     }
     if page["attachment"]:
+        log.debug("存在附件，添加附件结构")
         content["content"] += [[{
             "tag": "hr"
         }]] + [[{

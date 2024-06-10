@@ -1,22 +1,82 @@
 from bs4 import BeautifulSoup
-from . import bupt
+import requests
+from . import bupt, logger
+from urllib.parse import urljoin
 import json
 import time
 import os
+import sys
 
+
+_MAX_RETRY = 5
 name = "信息服务门户"
 baseURL = "http://my.bupt.edu.cn/"
-session = bupt.sessionInit(CAS=True)
+log = logger.getLogger(__name__)
+session = None
 with open(os.path.join(os.path.dirname(__file__), "../url/bupt.json"), "r") as file:
     url = json.load(file)["xxmh"]
-session.get(url=url["index"])    # 信息门户单独认证
+
+
+# 登录函数
+def login():
+    global session, log
+    log.debug("获取Session")
+    session = bupt.sessionInit(CAS=True)
+    if not session:
+        log.critical("获取Session失败")
+        sys.exit()
+    log.debug(f"登录到{name}")
+    is_success = False
+    for i in range(_MAX_RETRY + 1):
+        try:
+            resp = session.get(url=url["index"])
+            resp.raise_for_status()
+        except requests.exceptions.ConnectionError as e:
+            log.error(e)
+            log.error(f"网络连接错误，第{i}次")
+        except requests.exceptions.HTTPError as e:
+            log.error(e)
+            log.error(f"HTTP错误，第{i}次")
+        else:
+            log.debug("登录成功")
+            is_success = True
+        finally:
+            if is_success:
+                return
+            if i < _MAX_RETRY:
+                log.error(f"等待重试第{i + 1}次")
+                time.sleep(3)
+            else:
+                log.critical("达到最大重试次数，登录失败")
+                sys.exit()
+
+
+login()
+
+
+def getImgBinary(url):
+    global session, log
+    msg = {
+        "start": "获取图片文件",
+        "success": "获取成功",
+        "fail": "达到最大重试次数，获取失败"
+    }
+    resp = bupt.autoRetryRequest(msg, log)(session.get, url)
+    return resp.content
 
 
 # 格式化通知列表
 def get_notice_list():
-    global session, url
+    global session, url, log
+    msg = {
+        "start": "获取通知列表",
+        "success": "获取成功",
+        "fail": "达到最大重试次数，获取失败"
+    }
+    resp = bupt.autoRetryRequest(msg, log)(session.get, url["notice"])
+    log.debug("解析查询结果")
     noticesHTML = BeautifulSoup(
-        session.get(url["notice"]).text, "html.parser"
+        resp.text, "lxml"
     ).find(attrs={"class": "newslist list-unstyled"})
     noticeList = [
         {
@@ -32,10 +92,17 @@ def get_notice_list():
 
 
 def get_content(url):
-    global session
+    global session, log
     page = {}
+    msg = {
+        "start": "获取内容详情",
+        "success": "获取成功",
+        "fail": "达到最大重试次数，获取失败"
+    }
+    resp = bupt.autoRetryRequest(msg, log)(session.get, url)
+    log.debug("解析查询结果")
     contentHTML = BeautifulSoup(
-        session.get(url).text, "html.parser"
+        resp.text, "lxml"
     )
     page["title"] = contentHTML.h1.text
     page["content"] = []
@@ -47,9 +114,11 @@ def get_content(url):
                 "text": para.text.strip()
             } if para.text.strip() else None
         if para.img is not None:
+            imgURL = urljoin(baseURL, para.img["src"])
+            log.debug(f"发现图片{imgURL}")
             content = {
                 "tag": "img",
-                "img": session.get(baseURL + para.img["src"]).content
+                "img": getImgBinary(imgURL)
             }
         if content is not None:
             page["content"].append([content])
@@ -63,7 +132,9 @@ def get_content(url):
 
 
 def send_feishu(item):
-    global session
+    global session, log
+    log.debug(f"准备发往飞书的json结构，通知标题：{item['title']}，在{name}")
+    log.debug("生成通知结构")
     notice = {
         "title": item["title"],
         "content": [
@@ -83,7 +154,7 @@ def send_feishu(item):
                 {
                     "tag": "a",
                     "text": "原文地址",
-                    "href": item["url"]
+                    "href": urljoin(baseURL, item["url"])
                 },
                 {
                     "tag": "at",
@@ -93,12 +164,15 @@ def send_feishu(item):
             ]
         ]
     }
+    log.debug("获取详情页面结构")
     page = get_content(item["url"])
+    log.debug("生成内容结构")
     content = {
         "title": page["title"],
         "content": page["content"]
     }
     if page["attachment"]:
+        log.debug("存在附件，添加附件结构")
         content["content"] += [[{
             "tag": "hr"
         }]] + [[{
@@ -109,7 +183,7 @@ def send_feishu(item):
             [{
                 "tag": "a",
                 "text": batch["file"],
-                "href": batch["link"]
+                "href": urljoin(baseURL, batch["link"])
             }] for batch in page["attachment"]
         ]
     return notice, content
