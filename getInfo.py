@@ -54,6 +54,7 @@ def main():
 
         if count == len(sites) * _MAX_EMPTY_HIT:
             log.info(f"连续{_MAX_EMPTY_HIT}分钟没有新消息")
+            count = 0
 
         time.sleep(60)
 
