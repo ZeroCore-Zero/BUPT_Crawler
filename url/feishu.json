@@ -3,6 +3,7 @@
     "tenant_access_token": "https://open.feishu.cn/open-apis/auth/v3/tenant_access_token/internal",
     "send_message": "https://open.feishu.cn/open-apis/im/v1/messages",
     "get_groupid": "https://open.feishu.cn/open-apis/im/v1/chats",
+    "get_openid": "https://open.feishu.cn/open-apis/contact/v3/users/batch_get_id",
     "webhook": [
         {
             "url": "https://open.feishu.cn/open-apis/bot/v2/hook/24361ef9-1231-44de-97bb-d5f00565ed94",

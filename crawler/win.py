@@ -1,8 +1,8 @@
 from bs4 import BeautifulSoup
 from . import bupt, logger
 from urllib.parse import urljoin
-# import requests
-import sys
+# # import requests
+# import sys
 import json
 import time
 import os
@@ -25,7 +25,7 @@ def login():
     session = bupt.sessionInit()
     if not session:
         log.critical("获取Session失败")
-        bupt.exitProc()
+        bupt.exitProc("获取Session失败")
     # # 似乎不需要登录也能获取通知列表
     # log.debug(f"登录到{name}")
     # is_success = False
@@ -39,9 +39,15 @@ def login():
     #     except requests.exceptions.ConnectionError as e:
     #         log.error(e)
     #         log.error(f"网络连接错误，第{i}次")
+    #         if i >= _MAX_RETRY:
+    #             log.critical("达到最大重试次数，登录失败")
+    #             bupt.exitProc(e)
     #     except requests.exceptions.HTTPError as e:
     #         log.error(e)
     #         log.error(f"HTTP错误，第{i}次")
+    #         if i >= _MAX_RETRY:
+    #             log.critical("达到最大重试次数，登录失败")
+    #             bupt.exitProc(e)
     #     else:
     #         log.debug("登录成功")
     #         is_success = True
@@ -51,12 +57,6 @@ def login():
     #         if i < _MAX_RETRY:
     #             log.error(f"等待重试第{i + 1}次")
     #             time.sleep(3)
-    #         else:
-    #             log.critical("达到最大重试次数，登录失败")
-    #             bupt.exitProc()
-
-
-login()
 
 
 def get_notice_list():
@@ -223,3 +223,6 @@ def send_feishu(item):
             }] for batch in page["attachment"]
         ]
     return notice, content
+
+
+login()

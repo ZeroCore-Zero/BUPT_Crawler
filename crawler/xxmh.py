@@ -5,7 +5,7 @@ from urllib.parse import urljoin
 import json
 import time
 import os
-import sys
+# import sys
 
 
 _MAX_RETRY = 5
@@ -24,34 +24,13 @@ def login():
     session = bupt.sessionInit(CAS=True)
     if not session:
         log.critical("获取Session失败")
-        bupt.exitProc()
-    log.debug(f"登录到{name}")
-    is_success = False
-    for i in range(_MAX_RETRY + 1):
-        try:
-            resp = session.get(url=url["index"])
-            resp.raise_for_status()
-        except requests.exceptions.ConnectionError as e:
-            log.error(e)
-            log.error(f"网络连接错误，第{i}次")
-        except requests.exceptions.HTTPError as e:
-            log.error(e)
-            log.error(f"HTTP错误，第{i}次")
-        else:
-            log.debug("登录成功")
-            is_success = True
-        finally:
-            if is_success:
-                return
-            if i < _MAX_RETRY:
-                log.error(f"等待重试第{i + 1}次")
-                time.sleep(3)
-            else:
-                log.critical("达到最大重试次数，登录失败")
-                bupt.exitProc()
-
-
-login()
+        bupt.exitProc("获取Session失败")
+    msg = {
+        "start": f"登录到{name}",
+        "success": "登录成功",
+        "fail": "达到最大重试次数，登录失败"
+    }
+    bupt.autoRetryRequest(msg, log)(session.get, url=url["index"])
 
 
 def getImgBinary(url):
@@ -187,3 +166,6 @@ def send_feishu(item):
             }] for batch in page["attachment"]
         ]
     return notice, content
+
+
+login()
