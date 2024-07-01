@@ -92,7 +92,7 @@ def get_content(url):
                 "tag": "text",
                 "text": para.text.strip()
             } if para.text.strip() else None
-        if para.img is not None and "src" in para.img:
+        if para.img and para.img.get("img"):
             imgURL = urljoin(baseURL, para.img["src"])
             log.debug(f"发现图片{imgURL}")
             content = {
