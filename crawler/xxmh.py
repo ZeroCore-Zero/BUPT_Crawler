@@ -85,28 +85,35 @@ def get_content(url):
     )
     page["title"] = contentHTML.h1.text
     page["content"] = []
-    for para in contentHTML.find(attrs={"class": "v_news_content"}).find_all("p"):
+    for para in contentHTML.find(attrs={"class": "v_news_content"}).children:
         content = None
-        if para.span is not None:
+        if para.span:
             content = {
                 "tag": "text",
                 "text": para.text.strip()
             } if para.text.strip() else None
-        if para.img and para.img.get("img"):
+
+        if para.img and para.img.get("src"):
             imgURL = urljoin(baseURL, para.img["src"])
             log.debug(f"发现图片{imgURL}")
             content = {
                 "tag": "img",
                 "img": getImgBinary(imgURL)
             }
-        if content is not None:
+
+        if para.table:
+            content = {
+                "tag": "img",
+                "img": bupt.html_table_to_png(para.table)
+            }
+        if content:
             page["content"].append([content])
     page["attachment"] = [
         {
             "file": batch.a.text,
             "link": baseURL + batch.a["href"]
         } for batch in contentHTML.find(attrs={"class": "battch"}).ul.find_all("li")
-    ] if contentHTML.find(attrs={"class": "battch"}).ul is not None else []
+    ] if contentHTML.find(attrs={"class": "battch"}).ul else []
     return page
 
 
