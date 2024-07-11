@@ -114,7 +114,7 @@ def handle_node(para):
     if para.name == "table":
         return [{
             "tag": "img",
-            "img": bupt.html_table_to_png(para)
+            "img": bupt.html_table_to_png(baseURL, para)
         }]
     for node in para.contents:
         payload += handle_node(node)
@@ -136,7 +136,7 @@ def get_content(url):
     )
     page["title"] = contentHTML.h2.text
     page["content"] = []
-    page["attachment"] = []
+    page["attachment"] = [] # 本来是想分开的，但是大创网站的内容和附件融为一体，所以这项被弃用了，懒得删
     # 大创网站的页面html结构十分费解，所以下面的解析结构也十分费解（咱要文明~）
     for para in contentHTML.find(attrs={"class": "entry-content notopmargin"}).children:
         if isinstance(para, str):

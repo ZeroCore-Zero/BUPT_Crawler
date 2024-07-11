@@ -22,6 +22,7 @@ def main():
     term_count = 0
     day_count = 0
     total_count = 0
+    day_summary = False
     log.info("系统加载完毕")
     feishu.send_to_admin(f"{time.strftime('%Y-%m-%d %H:%M:%S')} 系统加载完毕")
 
@@ -62,9 +63,12 @@ def main():
             term_count = 0
 
         # 每天晚上十点向管理员发送每日总结
-        if time.strftime('%H') == "22":
+        if time.strftime('%H') == "22" and not day_summary:
             feishu.send_to_admin(f"{time.strftime('%Y-%m-%d')} 本日共发送消息{day_count}条，总计发送消息{total_count}")
             day_count = 0
+            day_summary = True
+        if time.strftime('%H') == "20":
+            day_summary = False
 
         time.sleep(60)
 

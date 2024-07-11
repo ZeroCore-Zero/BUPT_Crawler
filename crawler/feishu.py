@@ -93,22 +93,13 @@ def getImageKey(img):
     return rp.json()["data"]["image_key"]
 
 
-# 获取飞书文件标识
-def getFileKey(file):
-    pass
-
-
-# 处理图片和文件的接口
+# 处理图片的接口
 def load_item(item):
     global log
     if item["tag"] == "img":
         log.debug("图片项，调用图片接口")
         item["image_key"] = getImageKey(item["img"])
         del item["img"]
-    if item["tag"] == "file":
-        log.debug("文件项，调用文件接口")
-        item["file_key"] = getFileKey(item["file"])
-        del item["file"]
     else:
         log.debug("普通项，不做处理")
     return item

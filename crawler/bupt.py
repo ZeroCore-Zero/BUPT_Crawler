@@ -1,6 +1,7 @@
 from bs4 import BeautifulSoup
 import requests
-from PIL import Image
+from urllib.parse import urljoin
+from html2image import Html2Image
 from . import logger, feishu
 import time
 import json
@@ -112,9 +113,17 @@ def sessionInit(CAS=False) -> requests.Session:
     return None
 
 
-def html_table_to_png(html):
-    im = Image.open(os.path.join(os.path.dirname(__file__), "../holder.png"))
-    print(im.format, im.size, im.mode)
+def html_table_to_png(baseurl, table):
+    global log
+    log.debug("从html生成图片")
+    # table = BeautifulSoup(html, 'lxml').find('table')
+    for item in table.find_all("img"):
+        item["src"] = urljoin(baseurl, item["src"])
 
-
-# html_table_to_png("")
+    log.debug("生成图片")
+    photo = Html2Image().screenshot(html_str=str(table), css_str='body {background: white;}')[0]
+    log.debug("生成成功，读取到内存并删除缓存")
+    with open(photo, "rb") as img:
+        png = img.read()
+    os.remove(photo)
+    return png

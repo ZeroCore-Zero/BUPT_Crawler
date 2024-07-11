@@ -104,14 +104,15 @@ def get_content(url):
         if para.table:
             content = {
                 "tag": "img",
-                "img": bupt.html_table_to_png(para.table)
+                "img": bupt.html_table_to_png(baseURL, para.table)
             }
         if content:
             page["content"].append([content])
     page["attachment"] = [
         {
-            "file": batch.a.text,
-            "link": baseURL + batch.a["href"]
+            "tag": "a",
+            "text": batch.a.text,
+            "href": urljoin(baseURL, batch.a["href"])
         } for batch in contentHTML.find(attrs={"class": "battch"}).ul.find_all("li")
     ] if contentHTML.find(attrs={"class": "battch"}).ul else []
     return page
@@ -165,13 +166,7 @@ def send_feishu(item):
             "tag": "text",
             "text": "附件如下：",
             "style": ["bold"]
-        }]] + [
-            [{
-                "tag": "a",
-                "text": batch["file"],
-                "href": urljoin(baseURL, batch["link"])
-            }] for batch in page["attachment"]
-        ]
+        }]] + page["attachment"]
     return notice, content
 
 

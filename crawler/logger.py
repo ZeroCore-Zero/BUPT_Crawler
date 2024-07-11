@@ -23,7 +23,10 @@ class MyLogger():
         self.log.addHandler(self.console_handler)
 
         # log to file
-        self.file_handler = logging.FileHandler(filename=os.path.join(self.log_path, "lastest.log"))
+        if os.path.exists(os.path.join(self.log_path, f"{self.today}.log")):
+            self.file_handler = logging.FileHandler(filename=os.path.join(self.log_path, f"{self.today}.log"))
+        else:
+            self.file_handler = logging.FileHandler(filename=os.path.join(self.log_path, "lastest.log"))
         self.file_handler.setLevel(logging.DEBUG)
         self.file_handler.setFormatter(self.log_formatter)
         self.log.addHandler(self.file_handler)
@@ -35,6 +38,7 @@ class MyLogger():
             return
         self.log.removeHandler(self.file_handler)
         self.file_handler.close()
+        time.sleep(3)
         os.rename(
             os.path.join(self.log_path, "lastest.log"),
             os.path.join(self.log_path, f"{self.today}.log")

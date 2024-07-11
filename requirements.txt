@@ -3,3 +3,4 @@ requests_toolbelt
 beautifulsoup4
 pillow
 lxml
+html2image
