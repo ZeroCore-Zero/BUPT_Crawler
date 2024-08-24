@@ -86,11 +86,16 @@ def get_content(url):
     page["title"] = contentHTML.h1.text
     page["content"] = []
     for para in contentHTML.find(attrs={"class": "v_news_content"}).children:
+        if isinstance(para, str):
+            continue
         content = None
         if para.span:
+            content = ""
+            for child in para.children:
+                content += child.text
             content = {
                 "tag": "text",
-                "text": para.text.strip()
+                "text": content.strip()
             } if para.text.strip() else None
 
         if para.img and para.img.get("src"):
