@@ -165,13 +165,12 @@ def send_feishu(item):
     }
     if page["attachment"]:
         log.debug("存在附件，添加附件结构")
-        content["content"] += [[{
-            "tag": "hr"
-        }]] + [[{
+        content["content"] += [[{"tag": "hr"}]] + [[{
             "tag": "text",
             "text": "附件如下：",
             "style": ["bold"]
-        }]] + page["attachment"]
+        }]]
+        content["content"].append(page["attachment"])
     return notice, content
 
 
