@@ -1,9 +1,0 @@
-{
-    "appID": "",
-    "appSecret": "",
-    "admin": {
-        "mobile": null,
-        "email": null,
-        "open_id": null
-    },
-}

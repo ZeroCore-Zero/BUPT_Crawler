@@ -1,0 +1,8 @@
+<RCC>
+    <qresource prefix="/fonts">
+        <file>HarmonyOS_Sans_Black.ttf</file>
+    </qresource>
+    <qresource prefix="/img">
+        <file>logo.png</file>
+    </qresource>
+</RCC>

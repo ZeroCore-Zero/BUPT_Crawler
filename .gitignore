@@ -1,6 +1,6 @@
-__pycache__
 .vscode
-test
-config/*.json
-!config/common.json
-log
+__pycache__
+build
+BUPT_Crawler/config/*.json
+BUPT_Crawler/log
+env/
